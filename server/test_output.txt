@@ -1,0 +1,520 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/bin/python
+cachedir: .pytest_cache
+rootdir: /home/emily/Development/code/phase-4/python-p4-iam-putting-it-all-together-lab
+configfile: pytest.ini
+plugins: Faker-19.10.0
+collecting ... collected 19 items
+
+../Signup resource in app.py creates user records with usernames and passwords at /signup. PASSED [  5%]
+../Signup resource in app.py 422s invalid usernames at /signup. PASSED   [ 10%]
+../CheckSession resource in app.py returns JSON for the user's data if there is an active session. PASSED [ 15%]
+../CheckSession resource in app.py returns a 401 Unauthorized status code if there is no active session. PASSED [ 21%]
+../Login resource in app.py logs users in with a username and password at /login. PASSED [ 26%]
+../Login resource in app.py returns 401 for an invalid username and password at /login. PASSED [ 31%]
+../Logout resource in app.py logs users out at /logout. PASSED           [ 36%]
+../Logout resource in app.py returns 401 if a user attempts to logout without a session at /logout. PASSED [ 42%]
+../RecipeIndex resource in app.py returns a list of recipes associated with the logged in user and a 200 status code. PASSED [ 47%]
+../RecipeIndex resource in app.py test_get_route_returns_401_when_not_logged_in PASSED [ 52%]
+../RecipeIndex resource in app.py returns a list of recipes associated with the logged in user and a 200 status code. PASSED [ 52%]
+../RecipeIndex resource in app.py test_returns_422_for_invalid_recipes PASSED [ 57%]
+../User in models.py has attributes title, instructions, and minutes_to_complete. FAILED [ 63%]
+../User in models.py requires each record to have a title. PASSED        [ 68%]
+../User in models.py test_requires_50_plus_char_instructions PASSED      [ 73%]
+../User in models.py has attributes username, _password_hash, image_url, and bio. PASSED [ 78%]
+../User in models.py requires each record to have a username. PASSED     [ 84%]
+../User in models.py requires each record to have a username. PASSED     [ 84%]
+../User in models.py has records with lists of recipes records attached. FAILED [ 89%]
+
+=================================== FAILURES ===================================
+________________________ TestRecipe.test_has_attributes ________________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x779659f0cdc0>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x77965a1532e0>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x779659f0c100>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x779659f0db70>
+parameters = [('Delicious Shed Ham', 'Or kind rest bred with am shed then. In raptures building an bringing be. Elderly is detract ...Better of always missed we person mr. September smallness northward situation few her certainty something.', 60, None)]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -> CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+>                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1964: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x77965a1532e0>
+cursor = <sqlite3.Cursor object at 0x779659f46e40>
+statement = 'INSERT INTO recipes (title, instructions, minutes_to_complete, user_id) VALUES (?, ?, ?, ?)'
+parameters = ('Delicious Shed Ham', 'Or kind rest bred with am shed then. In raptures building an bringing be. Elderly is detract t... Better of always missed we person mr. September smallness northward situation few her certainty something.', 60, None)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x779659f0c100>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlite3.IntegrityError: NOT NULL constraint failed: recipes.user_id
+
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/default.py:942: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+self = <recipe_test.TestRecipe object at 0x779659eefee0>
+
+    def test_has_attributes(self):
+        '''has attributes title, instructions, and minutes_to_complete.'''
+    
+        with app.app_context():
+    
+            Recipe.query.delete()
+            db.session.commit()
+    
+            recipe = Recipe(
+                    title="Delicious Shed Ham",
+                    instructions="""Or kind rest bred with am shed then. In""" + \
+                        """ raptures building an bringing be. Elderly is detract""" + \
+                        """ tedious assured private so to visited. Do travelling""" + \
+                        """ companions contrasted it. Mistress strongly remember""" + \
+                        """ up to. Ham him compass you proceed calling detract.""" + \
+                        """ Better of always missed we person mr. September""" + \
+                        """ smallness northward situation few her certainty""" + \
+                        """ something.""",
+                    minutes_to_complete=60,
+                    )
+    
+            db.session.add(recipe)
+>           db.session.commit()
+
+testing/models_testing/recipe_test.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/scoping.py:599: in commit
+    return self._proxied.commit()
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2032: in commit
+    trans.commit(_to_root=True)
+<string>:2: in commit
+    ???
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/state_changes.py:139: in _go
+    ret_value = fn(self, *arg, **kw)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:1313: in commit
+    self._prepare_impl()
+<string>:2: in _prepare_impl
+    ???
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/state_changes.py:139: in _go
+    ret_value = fn(self, *arg, **kw)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:1288: in _prepare_impl
+    self.session.flush()
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:4353: in flush
+    self._flush(objects)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:4488: in _flush
+    with util.safe_reraise():
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:4449: in _flush
+    flush_context.execute()
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/persistence.py:93: in save_obj
+    _emit_insert_statements(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/persistence.py:1233: in _emit_insert_statements
+    result = connection.execute(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1416: in execute
+    return meth(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:516: in _execute_on_connection
+    return connection._execute_clauseelement(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1638: in _execute_clauseelement
+    ret = self._execute_context(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1843: in _execute_context
+    return self._exec_single_context(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1983: in _exec_single_context
+    self._handle_dbapi_exception(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2352: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1964: in _exec_single_context
+    self.dialect.do_execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x77965a1532e0>
+cursor = <sqlite3.Cursor object at 0x779659f46e40>
+statement = 'INSERT INTO recipes (title, instructions, minutes_to_complete, user_id) VALUES (?, ?, ?, ?)'
+parameters = ('Delicious Shed Ham', 'Or kind rest bred with am shed then. In raptures building an bringing be. Elderly is detract t... Better of always missed we person mr. September smallness northward situation few her certainty something.', 60, None)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x779659f0c100>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: recipes.user_id
+E       [SQL: INSERT INTO recipes (title, instructions, minutes_to_complete, user_id) VALUES (?, ?, ?, ?)]
+E       [parameters: ('Delicious Shed Ham', 'Or kind rest bred with am shed then. In raptures building an bringing be. Elderly is detract tedious assured private so to visited. Do travelling com ... (59 characters truncated) ... m him compass you proceed calling detract. Better of always missed we person mr. September smallness northward situation few her certainty something.', 60, None)]
+E       (Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/default.py:942: IntegrityError
+______________________ TestUser.test_has_list_of_recipes _______________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x779659127040>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x77965a1532e0>
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7796591241c0>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x779659efed40>
+parameters = [('Prabhdip', None, None, None)]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -> CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+>                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1964: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x77965a1532e0>
+cursor = <sqlite3.Cursor object at 0x779658db7940>
+statement = 'INSERT INTO users (username, _password_hash, image_url, bio) VALUES (?, ?, ?, ?)'
+parameters = ('Prabhdip', None, None, None)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7796591241c0>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlite3.IntegrityError: NOT NULL constraint failed: users._password_hash
+
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/default.py:942: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+self = <user_test.TestUser object at 0x779659eeed40>
+
+    def test_has_list_of_recipes(self):
+        '''has records with lists of recipes records attached.'''
+    
+        with app.app_context():
+    
+            User.query.delete()
+            db.session.commit()
+    
+            user = User(username="Prabhdip")
+    
+            recipe_1 = Recipe(
+                title="Delicious Shed Ham",
+                instructions="""Or kind rest bred with am shed then. In""" + \
+                    """ raptures building an bringing be. Elderly is detract""" + \
+                    """ tedious assured private so to visited. Do travelling""" + \
+                    """ companions contrasted it. Mistress strongly remember""" + \
+                    """ up to. Ham him compass you proceed calling detract.""" + \
+                    """ Better of always missed we person mr. September""" + \
+                    """ smallness northward situation few her certainty""" + \
+                    """ something.""",
+                minutes_to_complete=60,
+                )
+            recipe_2 = Recipe(
+                title="Hasty Party Ham",
+                instructions="""As am hastily invited settled at limited""" + \
+                             """ civilly fortune me. Really spring in extent""" + \
+                             """ an by. Judge but built gay party world. Of""" + \
+                             """ so am he remember although required. Bachelor""" + \
+                             """ unpacked be advanced at. Confined in declared""" + \
+                             """ marianne is vicinity.""",
+                minutes_to_complete=30,
+                )
+    
+            user.recipes.append(recipe_1)
+            user.recipes.append(recipe_2)
+    
+            db.session.add_all([user, recipe_1, recipe_2])
+>           db.session.commit()
+
+testing/models_testing/user_test.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/scoping.py:599: in commit
+    return self._proxied.commit()
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2032: in commit
+    trans.commit(_to_root=True)
+<string>:2: in commit
+    ???
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/state_changes.py:139: in _go
+    ret_value = fn(self, *arg, **kw)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:1313: in commit
+    self._prepare_impl()
+<string>:2: in _prepare_impl
+    ???
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/state_changes.py:139: in _go
+    ret_value = fn(self, *arg, **kw)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:1288: in _prepare_impl
+    self.session.flush()
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:4353: in flush
+    self._flush(objects)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:4488: in _flush
+    with util.safe_reraise():
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/session.py:4449: in _flush
+    flush_context.execute()
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/persistence.py:93: in save_obj
+    _emit_insert_statements(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/orm/persistence.py:1233: in _emit_insert_statements
+    result = connection.execute(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1416: in execute
+    return meth(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:516: in _execute_on_connection
+    return connection._execute_clauseelement(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1638: in _execute_clauseelement
+    ret = self._execute_context(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1843: in _execute_context
+    return self._exec_single_context(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1983: in _exec_single_context
+    self._handle_dbapi_exception(
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2352: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1964: in _exec_single_context
+    self.dialect.do_execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x77965a1532e0>
+cursor = <sqlite3.Cursor object at 0x779658db7940>
+statement = 'INSERT INTO users (username, _password_hash, image_url, bio) VALUES (?, ?, ?, ?)'
+parameters = ('Prabhdip', None, None, None)
+context = <sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext object at 0x7796591241c0>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: users._password_hash
+E       [SQL: INSERT INTO users (username, _password_hash, image_url, bio) VALUES (?, ?, ?, ?)]
+E       [parameters: ('Prabhdip', None, None, None)]
+E       (Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+/home/emily/snap/code/176/.local/share/virtualenvs/python-non-sqlalchemy-code-challenge-artic-VccET_mS/lib/python3.10/site-packages/sqlalchemy/engine/default.py:942: IntegrityError
+=========================== short test summary info ============================
+FAILED ../User in models.py has attributes title, instructions, and minutes_to_complete.
+FAILED ../User in models.py has records with lists of recipes records attached.
+========================= 2 failed, 17 passed in 7.58s =========================

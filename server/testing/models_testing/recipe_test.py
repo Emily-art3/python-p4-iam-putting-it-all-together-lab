@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app import app
-from models import db, Recipe
+from models import db, User, Recipe  
 
 class TestRecipe:
     '''User in models.py'''
@@ -13,36 +13,37 @@ class TestRecipe:
         with app.app_context():
 
             Recipe.query.delete()
+            User.query.delete()
+            db.session.commit()
+
+            user = User(username="TestUser")
+            user.password_hash = "securepassword"
+            db.session.add(user)
             db.session.commit()
 
             recipe = Recipe(
-                    title="Delicious Shed Ham",
-                    instructions="""Or kind rest bred with am shed then. In""" + \
-                        """ raptures building an bringing be. Elderly is detract""" + \
-                        """ tedious assured private so to visited. Do travelling""" + \
-                        """ companions contrasted it. Mistress strongly remember""" + \
-                        """ up to. Ham him compass you proceed calling detract.""" + \
-                        """ Better of always missed we person mr. September""" + \
-                        """ smallness northward situation few her certainty""" + \
-                        """ something.""",
-                    minutes_to_complete=60,
-                    )
-
-            db.session.add(recipe)
-            db.session.commit()
-
-            new_recipe = Recipe.query.filter(Recipe.title == "Delicious Shed Ham").first()
-
-            assert new_recipe.title == "Delicious Shed Ham"
-            assert new_recipe.instructions == """Or kind rest bred with am shed then. In""" + \
+                title="Delicious Shed Ham",
+                instructions="""Or kind rest bred with am shed then. In""" + \
                     """ raptures building an bringing be. Elderly is detract""" + \
                     """ tedious assured private so to visited. Do travelling""" + \
                     """ companions contrasted it. Mistress strongly remember""" + \
                     """ up to. Ham him compass you proceed calling detract.""" + \
                     """ Better of always missed we person mr. September""" + \
                     """ smallness northward situation few her certainty""" + \
-                    """ something."""
+                    """ something.""",
+                minutes_to_complete=60,
+                user_id=user.id 
+            )
+
+            db.session.add(recipe)
+            db.session.commit()
+
+            new_recipe = Recipe.query.filter(Recipe.title == "Delicious Shed Ham").first()
+
+            assert new_recipe is not None
+            assert new_recipe.title == "Delicious Shed Ham"
             assert new_recipe.minutes_to_complete == 60
+            assert new_recipe.user_id == user.id  
 
     def test_requires_title(self):
         '''requires each record to have a title.'''
@@ -52,7 +53,7 @@ class TestRecipe:
             Recipe.query.delete()
             db.session.commit()
 
-            recipe = Recipe()
+            recipe = Recipe(user_id=1)  
             
             with pytest.raises(IntegrityError):
                 db.session.add(recipe)
@@ -68,7 +69,8 @@ class TestRecipe:
             with pytest.raises( (IntegrityError, ValueError) ):
                 recipe = Recipe(
                     title="Generic Ham",
-                    instructions="idk lol")
+                    instructions="idk lol",
+                    user_id=1  
+                )
                 db.session.add(recipe)
                 db.session.commit()
-
